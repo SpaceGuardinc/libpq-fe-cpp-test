@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-// ipgqsldatabase.cpp
-#include "ipgqsldatabase.hpp"
-#include <fstream>
-#include <sstream>
-=======
 #include "ipgqsldatabase.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <libpq-fe.h>
->>>>>>> 4f94daf (Refactored 2)
 
 IPGQSLDatabase::IPGQSLDatabase(const std::string& configFile) : conn(nullptr), res(nullptr) {
     dbname = readConfig(configFile, "dbname");
@@ -18,22 +11,14 @@ IPGQSLDatabase::IPGQSLDatabase(const std::string& configFile) : conn(nullptr), r
 
 IPGQSLDatabase::~IPGQSLDatabase() {
     if (conn != nullptr) {
-<<<<<<< HEAD
-        PQfinish(conn);
-=======
         PQfinish(conn);  // Закрытие соединения только если оно открыто
->>>>>>> 4f94daf (Refactored 2)
     }
 }
 
 void IPGQSLDatabase::connect() {
     std::string conninfo = "dbname=" + dbname + " user=" + user;
     conn = PQconnectdb(conninfo.c_str());
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 4f94daf (Refactored 2)
     if (PQstatus(conn) != CONNECTION_OK) {
         std::cerr << "Connection failed: " << PQerrorMessage(conn);
         exitNicely();
@@ -43,12 +28,6 @@ void IPGQSLDatabase::connect() {
 }
 
 void IPGQSLDatabase::executeQuery(const std::string& query) {
-<<<<<<< HEAD
-    res = PQexec(conn, query.c_str());
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        std::cerr << "Query failed: " << PQerrorMessage(conn);
-        PQclear(res);
-=======
     std::cout << "Executing query: " << query << std::endl;  // Логируем запрос
     if (res != nullptr) {
         PQclear(res);  // Очистка предыдущего результата, если он существует
@@ -58,20 +37,16 @@ void IPGQSLDatabase::executeQuery(const std::string& query) {
     if (PQresultStatus(res) != PGRES_TUPLES_OK && PQresultStatus(res) != PGRES_COMMAND_OK) {
         std::cerr << "Query failed: " << PQerrorMessage(conn);
         PQclear(res);  // Очистка результата после ошибки
->>>>>>> 4f94daf (Refactored 2)
         exitNicely();
     }
 }
 
 void IPGQSLDatabase::showResult() {
-<<<<<<< HEAD
-=======
     if (res == nullptr) {
         std::cerr << "No results to show." << std::endl;
         return;
     }
 
->>>>>>> 4f94daf (Refactored 2)
     int i_fnum = PQfnumber(res, "id");
     int t_fnum = PQfnumber(res, "first_name");
     int b_fnum = PQfnumber(res, "second_name");
@@ -89,15 +64,9 @@ void IPGQSLDatabase::showResult() {
 
 void IPGQSLDatabase::exitNicely() {
     if (res != nullptr) {
-<<<<<<< HEAD
-        PQclear(res);
-    }
-    PQfinish(conn);
-=======
         PQclear(res);  // Очистка результата перед выходом
     }
     PQfinish(conn);  // Закрытие соединения
->>>>>>> 4f94daf (Refactored 2)
     exit(1);
 }
 

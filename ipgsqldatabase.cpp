@@ -1,4 +1,8 @@
+<<<<<<< HEAD:ipgsqldatabase.cpp
 #include "ipgsqldatabase.hpp"
+=======
+#include "ipgqsldatabase.hpp"
+>>>>>>> 01433399a3b715fc07ed1580f4d3b8fa41b2f675:ipgqsldatabase.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -27,7 +31,11 @@ void IPGSQLDatabase::connect() {
     }
 }
 
+<<<<<<< HEAD:ipgsqldatabase.cpp
 void IPGSQLDatabase::executeQuery(const std::string& query) {
+=======
+void IPGQSLDatabase::executeQuery(const std::string& query) {
+>>>>>>> 01433399a3b715fc07ed1580f4d3b8fa41b2f675:ipgqsldatabase.cpp
     std::cout << "Executing query: " << query << std::endl;  // Логируем запрос
     if (res != nullptr) {
         PQclear(res);  // Очистка предыдущего результата, если он существует
@@ -41,7 +49,11 @@ void IPGSQLDatabase::executeQuery(const std::string& query) {
     }
 }
 
+<<<<<<< HEAD:ipgsqldatabase.cpp
 void IPGSQLDatabase::showResult() {
+=======
+void IPGQSLDatabase::showResult() {
+>>>>>>> 01433399a3b715fc07ed1580f4d3b8fa41b2f675:ipgqsldatabase.cpp
     if (res == nullptr) {
         std::cerr << "No results to show." << std::endl;
         return;

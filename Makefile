@@ -7,7 +7,7 @@ CXXFLAGS = -std=c++11 -Wall -I/usr/include/postgresql
 LDFLAGS = -lpq  # флаг для подключения библиотеки libpq (для работы с PostgreSQL)
 
 # Файлы исходного кода и объектные файлы
-SRC = main.cpp ipgqsldatabase.cpp
+SRC = main.cpp ipgsqldatabase.cpp
 OBJ = $(SRC:.cpp=.o)
 
 # Правило по умолчанию: сборка программы

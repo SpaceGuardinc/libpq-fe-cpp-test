@@ -1,10 +1,10 @@
 // main.cpp
-#include "ipgqsldatabase.hpp"
+#include "ipgsqldatabase.hpp"
 #include <iostream>
 #include <string>
 
 int main() {
-    IPGQSLDatabase db("config.cfg");
+    IPGSQLDatabase db("config.cfg");
     db.connect();
     
     db.executeQuery("SET search_path = testlibpq3");

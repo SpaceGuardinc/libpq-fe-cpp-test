@@ -1,15 +1,15 @@
 // ipgqsldatabase.hpp
-#ifndef IPGQSLDATABASE_HPP
-#define IPGQSLDATABASE_HPP
+#ifndef IPGSQLDATABASE_HPP
+#define IPGSQLDATABASE_HPP
 
 #include <iostream>
 #include <libpq-fe.h>
 #include <string>
 
-class IPGQSLDatabase {
+class IPGSQLDatabase {
 public:
-    IPGQSLDatabase(const std::string& configFile);
-    ~IPGQSLDatabase();
+    IPGSQLDatabase(const std::string& configFile);
+    ~IPGSQLDatabase();
 
     void connect();
     void executeQuery(const std::string& query);
@@ -27,5 +27,5 @@ private:
     static std::string readConfig(const std::string& filename, const std::string& key);
 };
 
-#endif // IPGQSLDATABASE_HPP
+#endif // IPGSQLDATABASE_HPP
 

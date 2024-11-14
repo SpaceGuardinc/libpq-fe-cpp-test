@@ -15,7 +15,6 @@ namespace ssec {
             conn->tr_lock();
 
             try {
-                // Execute create table instruction
                 PGresult* res = PQexec(db, instruction);
                 if (PQresultStatus(res) != PGRES_COMMAND_OK) {
                     LOGGER_ERROR("Failed to create table: %s", PQerrorMessage(db));
@@ -45,9 +44,9 @@ namespace ssec {
             ss << ") VALUES (";
             for (size_t idx = 0; idx < values.size(); ++idx) {
                 const auto& field = values[idx];
-                if (field.desc.type == FieldType::INTEGER) {
+                if (field.desc.type == Field::FIELD_TYPE::INTEGER) {
                     ss << field.value.intValue;
-                } else if (field.desc.type == FieldType::TEXT) {
+                } else if (field.desc.type == Field::FIELD_TYPE::STRING) {
                     ss << "'" << field.value.strValue << "'";
                 }
                 if (idx != values.size() - 1) ss << ", ";

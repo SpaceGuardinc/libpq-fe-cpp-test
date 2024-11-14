@@ -1,9 +1,3 @@
-/**
- * @file IPGTable.hpp
- * @brief Интерфейс объекта, описывающего таблицу в БД PostgreSQL.
- * @version 0.1
-**/
-
 #ifndef __CORE_ORM_IPGTABLE_HPP__
 #define __CORE_ORM_IPGTABLE_HPP__
 
@@ -12,9 +6,6 @@
 #include <string>
 #include <memory>
 
-/**
- * @brief Поле и его значение для записи в таблице БД.
-**/
 struct Field {
     using field_name_t = std::string;
 
@@ -36,9 +27,6 @@ struct Field {
     field_value_t value;
 };
 
-/**
- * @brief Интерфейс объекта, описывающего таблицу в БД PostgreSQL.
-**/
 template<typename T>
 class IPGTable {
 
@@ -77,5 +65,4 @@ private:
 
 #include "IPGTable.tpp"
 
-#endif  // __CORE_ORM_IPGTABLE_HPP__
-
+#endif  

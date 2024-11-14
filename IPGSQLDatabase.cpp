@@ -80,4 +80,3 @@
         bool IPGSQLDatabase::_haveConnection() const {
             return conn_ != nullptr;
         }
-

@@ -13,10 +13,8 @@ int main() {
     std::string conn_str = misc::formatPostgresConnString(dbname, user);
 
     try {
-        IPGSQLDatabase db;
-	db.connect(conn_str);
-
-	// Записать в переменную table_name
+	IPGSQLDatabase db(conn_str); 
+        // Записать в переменную table_name
 	std::string query = "SELECT * FROM table_name;";
 
 	auto result = db.executeQuery(query);

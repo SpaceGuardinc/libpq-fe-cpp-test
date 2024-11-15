@@ -27,7 +27,7 @@ BUILD_DIR := build
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $(TARGET) $(OBJECTS) $(LDFLAGS)
 
 %.d: %.cpp
 	$(CXX) -M $(CFLAGS) $(INCLUDES) $< >> $@.tmp

@@ -17,12 +17,12 @@ int main() {
 	std::shared_ptr<ssec::orm::IPGSQLDatabase> db = std::make_shared<ssec::orm::IPGSQLDatabase>(conn_str);
         // Записать в переменную table_name
 	std::string query = "SELECT * FROM public.users;";
-    	std::vector<std::string> result = db.executeQuery(query);
+    	std::vector<std::string> result = db->executeQuery(query);
 
     	for (const auto& str : result) {
 		std::cout << str << std::endl;
     	}
-	db.disconnect();
+	db->disconnect();
 	
     } catch (const std::exception& e) {
 	    os::misc::logError("Error: " + std::string(e.what()));

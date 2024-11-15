@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <vector>
 
 
 namespace ssec {
@@ -20,7 +21,7 @@ namespace ssec {
             bool haveDatabase() const override;
             bool connect();
             void disconnect();
-            void executeQuery(const std::string& query);
+	    std::vector<std::string> executeQuery(const std::string& query);
             PGconn* getConnection() const;
 
         private:

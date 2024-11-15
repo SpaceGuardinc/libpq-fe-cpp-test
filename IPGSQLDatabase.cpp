@@ -1,6 +1,12 @@
 #include "IPGSQLDatabase.hpp"
-#include "misc.hpp"
+#include "PGmisc.hpp"
+#include <iostream>
 
+
+namespace ssec {
+    namespace orm {
+
+        // Конструктор
         IPGSQLDatabase::IPGSQLDatabase(const std::string& conninfo)
             : IDatabase<PGconn>(), conninfo_(conninfo) {
             if (!_haveConnection()) {
@@ -8,20 +14,22 @@
             }
         }
 
-        IPGSQLDatabase::~IPGSQLDatabase() {
-            disconnect();
-        }
+        // Деструктор
+        IPGSQLDatabase::~IPGSQLDatabase() {}
 
+        // Функция подключения
         bool IPGSQLDatabase::connect() {
             std::lock_guard<std::mutex> lg(db_mutex_);
             return _connect();
         }
 
+        // Функция отключения
         void IPGSQLDatabase::disconnect() {
             std::lock_guard<std::mutex> lg(db_mutex_);
             _disconnect();
         }
 
+        // Выполнение запроса
         void IPGSQLDatabase::executeQuery(const std::string& query) {
             std::lock_guard<std::mutex> lg(db_mutex_);
             if (!_haveConnection()) {
@@ -31,7 +39,7 @@
             PGresult* res = PQexec(conn_, query.c_str());
 
             if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-                misc::handleError("Query execution failed: " + std::string(PQerrorMessage(conn_)));
+		    os::misc::handleError("Query execution failed: " + std::string(PQerrorMessage(conn_)));
                 PQclear(res);
                 return;
             }
@@ -47,10 +55,32 @@
             PQclear(res);
         }
 
+        // Получение подключения
         PGconn* IPGSQLDatabase::getConnection() const {
             return _getConnection();
         }
 
+        // Реализация функций интерфейса
+        void IPGSQLDatabase::createDatabase(bool rewrite) {
+            if (rewrite) {
+                executeQuery("DROP DATABASE IF EXISTS my_database");
+            }
+            executeQuery("CREATE DATABASE my_database");
+        }
+
+        void IPGSQLDatabase::removeDatabase() {
+            executeQuery("DROP DATABASE IF EXISTS my_database");
+        }
+
+        std::shared_ptr<IDatabase<PGconn>> IPGSQLDatabase::getDatabase() const {
+            return std::make_shared<IPGSQLDatabase>(conninfo_);
+        }
+
+        bool IPGSQLDatabase::haveDatabase() const {
+            return _haveConnection();
+        }
+
+        // Внутреннее подключение
         bool IPGSQLDatabase::_connect() {
             if (_haveConnection()) {
                 return true;
@@ -59,13 +89,14 @@
             conn_ = PQconnectdb(conninfo_.c_str());
 
             if (PQstatus(conn_) != CONNECTION_OK) {
-                misc::handleError("Connection to database failed: " + std::string(PQerrorMessage(conn_)));
+		    os::misc::handleError("Connection to database failed: " + std::string(PQerrorMessage(conn_)));
                 return false;
             }
 
             return true;
         }
 
+        // Отключение
         void IPGSQLDatabase::_disconnect() {
             if (_haveConnection()) {
                 PQfinish(conn_);
@@ -73,10 +104,15 @@
             }
         }
 
+        // Получение подключения
         PGconn* IPGSQLDatabase::_getConnection() const {
             return conn_;
         }
 
+        // Проверка наличия подключения
         bool IPGSQLDatabase::_haveConnection() const {
             return conn_ != nullptr;
         }
+    }
+}
+

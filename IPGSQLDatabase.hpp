@@ -1,23 +1,23 @@
-#ifndef IPGSQLDATABASE_HPP
-#define IPGSQLDATABASE_HPP
+#ifndef __CORE_ORM_IPGSQLDATABASE_HPP__
+#define __CORE_ORM_IPGSQLDATABASE_HPP__
 
-#include <string>
-#include <vector>
-#include <mutex>
-#include <memory>
-#include <libpq-fe.h>
 #include "IPGDatabase.hpp"
-#include "misc.hpp"
+#include <libpq-fe.h>
+#include <memory>
+#include <string>
+#include <mutex>
 
-        class IPGSQLDatabase : public IDatabase<IPGSQLDatabase> {
-		
-        protected:
-            IPGSQLDatabase(const std::string& conninfo);
 
+namespace ssec {
+    namespace orm {
+        class IPGSQLDatabase : public IDatabase<PGconn> {
         public:
-            virtual ~IPGSQLDatabase() = 0;
-	    
-        public:
+            IPGSQLDatabase(const std::string& conninfo_);
+            virtual ~IPGSQLDatabase();
+            void createDatabase(bool rewrite = false) override;
+            void removeDatabase() override;
+            std::shared_ptr<IDatabase<PGconn>> getDatabase() const override;
+            bool haveDatabase() const override;
             bool connect();
             void disconnect();
             void executeQuery(const std::string& query);
@@ -28,11 +28,16 @@
             void _disconnect();
             PGconn* _getConnection() const;
 
-        private:
-           std::string conninfo_;
-           PGconn* conn_;
-	   mutable std::mutex db_mutex_;
-        };
+            bool _haveConnection() const;
 
-#endif
+            // Строка подключения и указатель на подключение
+            std::string conninfo_; ///< Строка подключения к базе данных.
+            PGconn* conn_; ///< Указатель на подключение к базе данных.
+            mutable std::mutex db_mutex_;
+        };
+    }
+}
+
+
+#endif  // __CORE_ORM_IPGSQLDATABASE_HPP__
 

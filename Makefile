@@ -1,22 +1,44 @@
-# Имя выходного исполняемого файла
-TARGET = main
+SUBLVL      := ../..
+LVL         := $(SUBLVL)/..
 
-# Компилятор и флаги
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall -I/usr/include/postgresql
-LDFLAGS = -lpq  # флаг для подключения библиотеки libpq (для работы с PostgreSQL)
+INCLUDE_DIR := $(LVL)/include
+LIB_DIR     := $(LVL)/lib
 
-# Файлы исходного кода и объектные файлы
-SRC = main.cpp ipgsqldatabase.cpp
-OBJ = $(SRC:.cpp=.o)
+CC          := gcc
+CXX         := g++
 
-# Правило по умолчанию: сборка программы
-$(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ) $(LDFLAGS)
+CFLAGS      := -O3 -Wall -W -std=c++11 -DCK_GENERIC -D__USE_GNU -fPIC
 
-# Правило для сборки объектных файлов
+INCLUDES    := -I$(INCLUDE_DIR) \
+	       -I/usr/include/postgresql
+
+LDFLAGS     := -lpq
+
+SOURCES     := main.cpp \
+               IPGSQLDatabase.cpp \
+	       PGmisc.cpp
+OBJECTS     := $(SOURCES:.cpp=.o)
+DEPEND      := $(SOURCES:.cpp=.d)
+
+TARGET      := main
+
+BUILD_DIR := build
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+
+%.d: %.cpp
+	$(CXX) -M $(CFLAGS) $(INCLUDES) $< >> $@.tmp
+	mv $@.tmp $@
+
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo "Current directory: $(shell pwd)"
+	$(CXX) -c $(CFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) $(CFLAGS) $(INCLUDES) -M -MT $@ $< -o $(@:.o=.d)
 
-# Очистка объектных файлов и исполняемого файла
+clean:
+	rm -f $(TARGET) $(OBJECTS) $(DEPEND) $(DEPEND:.d=.d.tmp)
+	rm -rf $(BUILD_DIR)  # Если создается подкаталог
 

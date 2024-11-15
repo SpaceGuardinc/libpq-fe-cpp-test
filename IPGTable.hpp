@@ -6,6 +6,13 @@
 #include <string>
 #include <memory>
 
+
+namespace ssec {
+    namespace orm {
+    
+    }
+}
+
 struct Field {
     using field_name_t = std::string;
 
@@ -65,4 +72,5 @@ private:
 
 #include "IPGTable.tpp"
 
-#endif  
+#endif  // __CORE_ORM_IPGTABLE_HPP__
+

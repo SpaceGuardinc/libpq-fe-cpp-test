@@ -1,7 +1,8 @@
-#include "misc.hpp"
+#include "PGmisc.hpp"
 #include "IPGSQLDatabase.hpp"
 #include <string>
 #include <iostream>
+#include <vector>
 
 int main() {
     //std::string host = "";
@@ -10,25 +11,22 @@ int main() {
     //std::string password = "";
 
     //std::string conn_str = misc::formatPostgresConnString(host, dbname, user, password);
-    std::string conn_str = misc::formatPostgresConnString(dbname, user);
+    std::string conn_str = os::misc::formatPostgresConnString(dbname, user);
 
     try {
-	IPGSQLDatabase db(conn_str); 
+	std::shared_ptr<ssec::orm::IPGSQLDatabase> db = std::make_shared<ssec::orm::IPGSQLDatabase>(conn_str);
         // Записать в переменную table_name
-	std::string query = "SELECT * FROM table_name;";
+	std::string query = "SELECT * FROM public.users;";
+    	std::vector<std::string> result = db.executeQuery(query);
 
-	auto result = db.executeQuery(query);
-
-	std::cout << "Query result: " << result << std::endl;
-
+    	for (const auto& str : result) {
+		std::cout << str << std::endl;
+    	}
 	db.disconnect();
 	
     } catch (const std::exception& e) {
-	    misc::os::logError("Error: " + std::string(e.what()));
+	    os::misc::logError("Error: " + std::string(e.what()));
     }
 
     return 0;
 }
-
-
-

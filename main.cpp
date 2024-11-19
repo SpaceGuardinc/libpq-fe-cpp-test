@@ -3,30 +3,32 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include "logger.hpp"
 
 int main() {
-    //std::string host = "";
-    std::string dbname = "test";
-    std::string user = "spaceguard";
-    //std::string password = "";
+	//std::string host = "";
+	std::string dbname = "test";
+	std::string user = "spaceguard";
+	//std::string password = "";
 
-    //std::string conn_str = misc::formatPostgresConnString(host, dbname, user, password);
-    std::string conn_str = os::misc::formatPostgresConnString(dbname, user);
+	//std::string conn_str = misc::formatPostgresConnString(host, dbname, user, password);
+	std::string conn_str = os::misc::formatPostgresConnString(dbname, user);
 
-    try {
-	std::shared_ptr<ssec::orm::IPGSQLDatabase> db = std::make_shared<ssec::orm::IPGSQLDatabase>(conn_str);
-        // Записать в переменную table_name
-	std::string query = "SELECT * FROM public.users;";
-    	std::vector<std::string> result = db->executeQuery(query);
+	try {
+		std::shared_ptr<ssec::orm::IPGSQLDatabase> db = std::make_shared<ssec::orm::IPGSQLDatabase>(conn_str);
+		// Записать в переменную table_name
+		std::string query = "SELECT * FROM public.users;";
+		std::vector<std::string> result = db->executeQuery(query);
 
-    	for (const auto& str : result) {
-		std::cout << str << std::endl;
-    	}
-	db->disconnect();
-	
-    } catch (const std::exception& e) {
-	    os::misc::logError("Error: " + std::string(e.what()));
-    }
+		for (const auto& str : result) {
+			std::cout << str << std::endl;
+		}
+		db->disconnect();
 
-    return 0;
+	} catch (const std::exception& e) {
+		auto& log = ssec::logger::instance();
+		log.fatal("Unhandled exception: %s", e.what());
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }

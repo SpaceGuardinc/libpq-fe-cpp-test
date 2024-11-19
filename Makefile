@@ -16,7 +16,8 @@ LDFLAGS     := -lpq
 
 SOURCES     := main.cpp \
                IPGSQLDatabase.cpp \
-	       PGmisc.cpp
+	       PGmisc.cpp \
+	       logger.cpp
 OBJECTS     := $(SOURCES:.cpp=.o)
 DEPEND      := $(SOURCES:.cpp=.d)
 
@@ -40,5 +41,5 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) $(DEPEND) $(DEPEND:.d=.d.tmp)
-	rm -rf $(BUILD_DIR)  # Если создается подкаталог
+	rm -rf $(BUILD_DIR)
 

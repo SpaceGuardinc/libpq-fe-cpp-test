@@ -1,5 +1,6 @@
 #include "IPGSQLDatabase.hpp"
 #include "PGmisc.hpp"
+#include "logger.hpp"
 #include <iostream>
 #include <vector>
 
@@ -39,7 +40,7 @@ namespace ssec {
 
 			PGresult* res = PQexec(conn_, query.c_str());
 			if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-				os::misc::handleError("Query execution failed: " + std::string(PQerrorMessage(conn_)));
+				ssec::logger::instance().error("Query execution failed: %s", PQerrorMessage(conn_));
 				PQclear(res);
 				throw std::runtime_error("Query execution failed");
 			}
@@ -94,7 +95,7 @@ namespace ssec {
 			conn_ = PQconnectdb(conninfo_.c_str());
 
 			if (PQstatus(conn_) != CONNECTION_OK) {
-				os::misc::handleError("Connection to database failed: " + std::string(PQerrorMessage(conn_)));
+				ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn_));
 				return false;
 			}
 

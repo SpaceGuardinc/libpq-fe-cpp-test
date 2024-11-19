@@ -1,6 +1,5 @@
 namespace ssec {
     namespace orm {
-
         template <typename T>
         IDatabase<T>::~IDatabase() {}
 

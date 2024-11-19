@@ -1,10 +1,10 @@
 namespace ssec {
     namespace orm {
         template<typename T>
-        IPGTable<T>::~IPGTable() {}
+        ITable<T>::~ITable() {}
 
         template<typename T>
-        inline std::shared_ptr<T> IPGTable<T>::getDatabase() const {
+        inline std::shared_ptr<T> ITable<T>::getDatabase() const {
             return conn_->getDatabase();
         }
     }

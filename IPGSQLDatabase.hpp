@@ -1,7 +1,7 @@
-#ifndef __CORE_ORM_IPGSQLDATABASE_HPP__
-#define __CORE_ORM_IPGSQLDATABASE_HPP__
+#ifndef __IPGSQLDATABASE_HPP__
+#define __IPGSQLDATABASE_HPP__
 
-#include "IPGDatabase.hpp"
+#include "IDatabase.hpp"
 #include <libpq-fe.h>
 #include <memory>
 #include <string>
@@ -40,5 +40,5 @@ namespace ssec {
 }
 
 
-#endif  // __CORE_ORM_IPGSQLDATABASE_HPP__
+#endif  // __IPGSQLDATABASE_HPP__
 

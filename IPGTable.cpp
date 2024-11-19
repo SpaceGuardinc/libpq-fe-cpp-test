@@ -1,12 +1,12 @@
-#include "IPGTable.hpp"
+#include "ITable.hpp"
 #include "IPGSQLDatabase.hpp"
 #include <libpq-fe.h>
 #include <sstream>
-#include "logger/logger.hpp"
+#include "logger.hpp"
 
 namespace ssec {
     namespace orm {
-        void IPGTable::createTable(
+        void ITable::createTable(
             const char* const instruction,
             const std::shared_ptr<IPGSQLDatabase>& conn
         ) {
@@ -30,7 +30,7 @@ namespace ssec {
             conn->tr_unlock();
         }
 
-        void IPGTable::insert(const std::vector<Field>& values) {
+        void ITable::insert(const std::vector<Field>& values) {
             auto db = getDatabase();
             std::stringstream ss;
             ss << "INSERT INTO " << getTable() << " (";

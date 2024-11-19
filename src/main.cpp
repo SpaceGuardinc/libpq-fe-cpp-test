@@ -1,11 +1,12 @@
-#include "PGmisc.hpp"
-#include "IPGSQLDatabase.hpp"
+#include "misc/misc.hpp"
+#include "includes/IPGSQLDatabase.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-#include "logger.hpp"
+#include "logger/logger.hpp"
 
 int main() {
+	ssec::logger::init_logger(ssec::logger::LEVEL::ERROR, ssec::logger::TYPE::TO_STDERR);
 	//std::string host = "";
 	std::string dbname = "test";
 	std::string user = "spaceguard";

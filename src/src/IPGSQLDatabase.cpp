@@ -1,5 +1,5 @@
 #include "IPGSQLDatabase.hpp"
-#include "PGmisc.hpp"
+#include "misc.hpp"
 #include "logger.hpp"
 #include <iostream>
 #include <vector>

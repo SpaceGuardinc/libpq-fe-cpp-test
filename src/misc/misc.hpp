@@ -1,5 +1,5 @@
-#ifndef PGMISC_HPP
-#define PGMISC_HPP
+#ifndef MISC_HPP
+#define MISC_HPP
 
 #include <string>
 #include <stdexcept>
@@ -13,5 +13,5 @@ namespace os {
     }
 }
 
-#endif // PGMISC_HPP
+#endif // MISC_HPP
 

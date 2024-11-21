@@ -12,29 +12,15 @@ namespace ssec {
         }
 
         IPGSQLDatabase::IPGSQLDatabase(const std::string& conninfo)
-            : conninfo_(conninfo), conn_(nullptr) {}
+            : conninfo_(conninfo) {}
 
-        IPGSQLDatabase::~IPGSQLDatabase() {
-            _disconnect();  
-        }
-
-        bool IPGSQLDatabase::connect() {
-            std::lock_guard<std::mutex> lg(db_mutex_);
-            return _connect();
-        }
-
-        void IPGSQLDatabase::disconnect() {
-            std::lock_guard<std::mutex> lg(db_mutex_);
-            _disconnect();
-        }
+        IPGSQLDatabase::~IPGSQLDatabase() {}
 
         std::vector<std::string> IPGSQLDatabase::executeQuery(const std::string& query) {
-            std::lock_guard<std::mutex> lg(db_mutex_);
-
             PGconn* conn = PQconnectdb(conninfo_.c_str());
             if (PQstatus(conn) != CONNECTION_OK) {
                 ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn));
-                PQfinish(conn);  
+                PQfinish(conn);
                 throw std::runtime_error("Database connection failed");
             }
 
@@ -42,7 +28,7 @@ namespace ssec {
             if (PQresultStatus(res) != PGRES_TUPLES_OK) {
                 ssec::logger::instance().error("Query execution failed: %s", PQerrorMessage(conn));
                 PQclear(res);
-                PQfinish(conn);  
+                PQfinish(conn); 
                 throw std::runtime_error("Query execution failed");
             }
 
@@ -58,7 +44,7 @@ namespace ssec {
             }
 
             PQclear(res);
-            PQfinish(conn);  
+            PQfinish(conn); 
 
             return result;
         }
@@ -79,33 +65,13 @@ namespace ssec {
         }
 
         bool IPGSQLDatabase::haveDatabase() const {
-            return _haveConnection();
-        }
-
-        bool IPGSQLDatabase::_connect() {
-            if (_haveConnection()) {
-                return true;
-            }
-
-            conn_ = PQconnectdb(conninfo_.c_str());
-
-            if (PQstatus(conn_) != CONNECTION_OK) {
-                ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn_));
+            PGconn* conn = PQconnectdb(conninfo_.c_str());
+            if (PQstatus(conn) != CONNECTION_OK) {
+                PQfinish(conn);
                 return false;
             }
-
+            PQfinish(conn);
             return true;
-        }
-
-        void IPGSQLDatabase::_disconnect() {
-            if (_haveConnection()) {
-                PQfinish(conn_);
-                conn_ = nullptr;
-            }
-        }
-
-        bool IPGSQLDatabase::_haveConnection() const {
-            return conn_ != nullptr;
         }
     }
 }

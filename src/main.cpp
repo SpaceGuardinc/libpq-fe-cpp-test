@@ -24,7 +24,6 @@ int main() {
 		for (const auto& str : result) {
 			std::cout << str << std::endl;
 		}
-		db->disconnect();
 
 	} catch (const std::exception& e) {
 		auto& log = ssec::logger::instance();

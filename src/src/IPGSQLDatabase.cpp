@@ -5,112 +5,108 @@
 #include <vector>
 
 namespace ssec {
-	namespace orm {
+    namespace orm {
 
-		std::string formatPostgresConnString(const std::string& dbname, const std::string& user) {
-			return " dbname=" + dbname + " user=" + user;
-		}
+        std::string formatPostgresConnString(const std::string& dbname, const std::string& user) {
+            return "dbname=" + dbname + " user=" + user;
+        }
 
-		// Конструктор
-		IPGSQLDatabase::IPGSQLDatabase(const std::string& conninfo)
-			: IDatabase<PGconn>(), conninfo_(conninfo) {
-				if (!_haveConnection()) {
-					_connect();
-				}
-			}
+        IPGSQLDatabase::IPGSQLDatabase(const std::string& conninfo)
+            : conninfo_(conninfo), conn_(nullptr) {}
 
-		// Деструктор
-		IPGSQLDatabase::~IPGSQLDatabase() {}
+        IPGSQLDatabase::~IPGSQLDatabase() {
+            _disconnect();  
+        }
 
-		// Функция подключения
-		bool IPGSQLDatabase::connect() {
-			std::lock_guard<std::mutex> lg(db_mutex_);
-			return _connect();
-		}
+        bool IPGSQLDatabase::connect() {
+            std::lock_guard<std::mutex> lg(db_mutex_);
+            return _connect();
+        }
 
-		// Функция отключения
-		void IPGSQLDatabase::disconnect() {
-			std::lock_guard<std::mutex> lg(db_mutex_);
-			_disconnect();
-		}
+        void IPGSQLDatabase::disconnect() {
+            std::lock_guard<std::mutex> lg(db_mutex_);
+            _disconnect();
+        }
 
-		// Выполнение запроса
-		std::vector<std::string> IPGSQLDatabase::executeQuery(const std::string& query) {
-			std::lock_guard<std::mutex> lg(db_mutex_);
-			if (!_haveConnection()) {
-				throw std::runtime_error("Database not connected");
-			}
+        std::vector<std::string> IPGSQLDatabase::executeQuery(const std::string& query) {
+            std::lock_guard<std::mutex> lg(db_mutex_);
 
-			PGresult* res = PQexec(conn_, query.c_str());
-			if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-				ssec::logger::instance().error("Query execution failed: %s", PQerrorMessage(conn_));
-				PQclear(res);
-				throw std::runtime_error("Query execution failed");
-			}
+            PGconn* conn = PQconnectdb(conninfo_.c_str());
+            if (PQstatus(conn) != CONNECTION_OK) {
+                ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn));
+                PQfinish(conn);  
+                throw std::runtime_error("Database connection failed");
+            }
 
-			std::vector<std::string> result;
-			int nFields = PQnfields(res);
-			for (int i = 0; i < PQntuples(res); ++i) {
-				std::string row;
-				for (int j = 0; j < nFields; ++j) {
-					if (j > 0) row += ", ";
-					row += PQgetvalue(res, i, j);
-				}
-				result.push_back(row);
-			}
+            PGresult* res = PQexec(conn, query.c_str());
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                ssec::logger::instance().error("Query execution failed: %s", PQerrorMessage(conn));
+                PQclear(res);
+                PQfinish(conn);  
+                throw std::runtime_error("Query execution failed");
+            }
 
-			PQclear(res);
-			return result;
-		}
+            std::vector<std::string> result;
+            int nFields = PQnfields(res);
+            for (int i = 0; i < PQntuples(res); ++i) {
+                std::string row;
+                for (int j = 0; j < nFields; ++j) {
+                    if (j > 0) row += ", ";
+                    row += PQgetvalue(res, i, j);
+                }
+                result.push_back(row);
+            }
 
-		// Реализация функций интерфейса
-		void IPGSQLDatabase::createDatabase(bool rewrite) {
-			if (rewrite) {
-				executeQuery("DROP DATABASE IF EXISTS my_database");
-			}
-			executeQuery("CREATE DATABASE my_database");
-		}
+            PQclear(res);
+            PQfinish(conn);  
 
-		void IPGSQLDatabase::removeDatabase() {
-			executeQuery("DROP DATABASE IF EXISTS my_database");
-		}
+            return result;
+        }
 
-		std::shared_ptr<IDatabase<PGconn>> IPGSQLDatabase::getDatabase() const {
-			return std::make_shared<IPGSQLDatabase>(conninfo_);
-		}
+        void IPGSQLDatabase::createDatabase(bool rewrite) {
+            if (rewrite) {
+                executeQuery("DROP DATABASE IF EXISTS my_database");
+            }
+            executeQuery("CREATE DATABASE my_database");
+        }
 
-		bool IPGSQLDatabase::haveDatabase() const {
-			return _haveConnection();
-		}
+        void IPGSQLDatabase::removeDatabase() {
+            executeQuery("DROP DATABASE IF EXISTS my_database");
+        }
 
-		// Внутреннее подключение
-		bool IPGSQLDatabase::_connect() {
-			if (_haveConnection()) {
-				return true;
-			}
+        std::shared_ptr<IDatabase<PGconn>> IPGSQLDatabase::getDatabase() const {
+            return std::make_shared<IPGSQLDatabase>(conninfo_);
+        }
 
-			conn_ = PQconnectdb(conninfo_.c_str());
+        bool IPGSQLDatabase::haveDatabase() const {
+            return _haveConnection();
+        }
 
-			if (PQstatus(conn_) != CONNECTION_OK) {
-				ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn_));
-				return false;
-			}
+        bool IPGSQLDatabase::_connect() {
+            if (_haveConnection()) {
+                return true;
+            }
 
-			return true;
-		}
+            conn_ = PQconnectdb(conninfo_.c_str());
 
-		// Отключение
-		void IPGSQLDatabase::_disconnect() {
-			if (_haveConnection()) {
-				PQfinish(conn_);
-				conn_ = nullptr;
-			}
-		}
+            if (PQstatus(conn_) != CONNECTION_OK) {
+                ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(conn_));
+                return false;
+            }
 
-		// Проверка наличия подключения
-		bool IPGSQLDatabase::_haveConnection() const {
-			return conn_ != nullptr;
-		}
-	}
+            return true;
+        }
+
+        void IPGSQLDatabase::_disconnect() {
+            if (_haveConnection()) {
+                PQfinish(conn_);
+                conn_ = nullptr;
+            }
+        }
+
+        bool IPGSQLDatabase::_haveConnection() const {
+            return conn_ != nullptr;
+        }
+    }
 }
 

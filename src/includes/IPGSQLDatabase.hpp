@@ -32,7 +32,7 @@ namespace ssec {
             PGconn* conn_; 
             mutable std::mutex db_mutex_;
         };
-	std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
+        std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
     }
 }
 

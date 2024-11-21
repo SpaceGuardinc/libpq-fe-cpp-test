@@ -8,7 +8,6 @@
 #include <mutex>
 #include <vector>
 
-
 namespace ssec {
     namespace orm {
         class IPGSQLDatabase : public IDatabase<PGconn> {
@@ -21,26 +20,21 @@ namespace ssec {
             bool haveDatabase() const override;
             bool connect();
             void disconnect();
-	    static std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
-	    std::vector<std::string> executeQuery(const std::string& query);
-            PGconn* getConnection() const;
+            static std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
+            std::vector<std::string> executeQuery(const std::string& query);
 
         private:
             bool _connect();
             void _disconnect();
-            PGconn* _getConnection() const;
-
             bool _haveConnection() const;
 
-            // Строка подключения и указатель на подключение
-            std::string conninfo_; ///< Строка подключения к базе данных.
-            PGconn* conn_; ///< Указатель на подключение к базе данных.
+            std::string conninfo_; 
+            PGconn* conn_; 
             mutable std::mutex db_mutex_;
         };
 	std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
     }
 }
-
 
 #endif  // __IPGSQLDATABASE_HPP__
 

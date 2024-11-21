@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 
-
 namespace ssec {
 	namespace orm {
 
@@ -64,12 +63,6 @@ namespace ssec {
 			return result;
 		}
 
-
-		// Получение подключения
-		PGconn* IPGSQLDatabase::getConnection() const {
-			return _getConnection();
-		}
-
 		// Реализация функций интерфейса
 		void IPGSQLDatabase::createDatabase(bool rewrite) {
 			if (rewrite) {
@@ -112,11 +105,6 @@ namespace ssec {
 				PQfinish(conn_);
 				conn_ = nullptr;
 			}
-		}
-
-		// Получение подключения
-		PGconn* IPGSQLDatabase::_getConnection() const {
-			return conn_;
 		}
 
 		// Проверка наличия подключения

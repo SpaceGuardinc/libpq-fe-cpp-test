@@ -21,6 +21,7 @@ namespace ssec {
             bool haveDatabase() const override;
             bool connect();
             void disconnect();
+	    static std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
 	    std::vector<std::string> executeQuery(const std::string& query);
             PGconn* getConnection() const;
 
@@ -36,6 +37,7 @@ namespace ssec {
             PGconn* conn_; ///< Указатель на подключение к базе данных.
             mutable std::mutex db_mutex_;
         };
+	std::string formatPostgresConnString(const std::string& dbname, const std::string& user);
     }
 }
 

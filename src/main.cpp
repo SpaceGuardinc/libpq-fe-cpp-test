@@ -1,4 +1,4 @@
-#include "misc/misc.hpp"
+//#include "misc/misc.hpp"
 #include "includes/IPGSQLDatabase.hpp"
 #include <string>
 #include <iostream>
@@ -13,7 +13,7 @@ int main() {
 	//std::string password = "";
 
 	//std::string conn_str = misc::formatPostgresConnString(host, dbname, user, password);
-	std::string conn_str = os::misc::formatPostgresConnString(dbname, user);
+	std::string conn_str = ssec::orm::formatPostgresConnString(dbname, user);
 
 	try {
 		std::shared_ptr<ssec::orm::IPGSQLDatabase> db = std::make_shared<ssec::orm::IPGSQLDatabase>(conn_str);

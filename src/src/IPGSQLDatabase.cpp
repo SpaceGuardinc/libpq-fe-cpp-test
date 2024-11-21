@@ -8,6 +8,10 @@
 namespace ssec {
 	namespace orm {
 
+		std::string formatPostgresConnString(const std::string& dbname, const std::string& user) {
+			return " dbname=" + dbname + " user=" + user;
+		}
+
 		// Конструктор
 		IPGSQLDatabase::IPGSQLDatabase(const std::string& conninfo)
 			: IDatabase<PGconn>(), conninfo_(conninfo) {

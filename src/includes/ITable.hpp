@@ -1,7 +1,6 @@
 #ifndef __ITABLE_HPP__
 #define __ITABLE_HPP__
 
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -28,17 +27,31 @@ namespace ssec {
             field_value_t value;
         };
 
+
+
+
         template <typename T>
         class ITable {
         public:
             ITable(const std::string& table, const std::shared_ptr<IDatabase<T>>& conn)
                 : table_(table), conn_(conn) {}
-            virtual ~ITable();
+            virtual ~ITable() = 0;
+
+        protected:
+            std::vector<std::vector<std::shared_ptr<void>>> select(
+                const std::vector<Field>& fields, 
+                const std::vector<Field>& conditions
+            );
 
             std::shared_ptr<T> getDatabase() const;
 
-            // Define function signatures for createTable and insert
-            void createTable(const char* const instruction, const std::shared_ptr<IPGSQLDatabase>& conn);
+            void delet(const std::vector<Field>& conditions);
+            void update(
+                const std::vector<Field>& values,
+                const std::vector<Field>& conditions
+            );
+
+            static void createTable(const char* const instruction, const std::shared_ptr<IDatabase<T>>& conn);
             void insert(const std::vector<Field>& values);
 
         protected:
@@ -48,10 +61,19 @@ namespace ssec {
             std::string table_;
             std::shared_ptr<IDatabase<T>> conn_;
         };
+
+        template<>
+        void ITable<IPGSQLDatabase>::createTable(const char* const instruction, const std::shared_ptr<IDatabase<IPGSQLDatabase>>& conn);
+
+	template<>
+        std::vector<std::vector<std::shared_ptr<void>>> ITable<PGconn>::select(
+            const std::vector<ssec::orm::Field>& fields,
+            const std::vector<ssec::orm::Field>& conditions
+        );
+
+
     }
 }
-
-
 #include "ITable.tpp"
 
 #endif  // __ITABLE_HPP__

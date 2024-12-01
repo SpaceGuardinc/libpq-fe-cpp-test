@@ -23,8 +23,8 @@ namespace ssec {
         public:
             virtual void createDatabase(bool rewrite = false) = 0;
             virtual void removeDatabase() = 0;
-	    virtual std::shared_ptr<IDatabase<PGconn>> getDatabase() const = 0;
-	    virtual bool haveDatabase() const = 0;
+            virtual std::shared_ptr<T> getDatabase() const = 0;
+            virtual bool haveDatabase() const = 0;
 
         public:
            void tr_lock();
@@ -39,5 +39,3 @@ namespace ssec {
 #include "IDatabase.tpp"
 
 #endif  // __IPGDATABASE_HPP__
-
-

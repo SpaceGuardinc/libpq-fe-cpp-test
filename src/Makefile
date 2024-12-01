@@ -4,7 +4,7 @@ MISC_DIR     := misc
 LOGGER_DIR   := logger
 
 CC           := g++
-CFLAGS       := -O3 -Wall -W -std=c++11 -DCK_GENERIC -D__USE_GNU -fPIC
+CFLAGS       := -O3 -Wall -W -std=c++11 -DCK_GENERIC -D__USE_GNU -fPIC -g -ggdb
 INCLUDES     := -I$(INCLUDE_DIR) \
                 -I$(MISC_DIR) \
                 -I$(LOGGER_DIR) \
@@ -55,4 +55,3 @@ clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
 
 .PHONY: all clean
-

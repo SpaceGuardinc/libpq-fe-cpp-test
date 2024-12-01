@@ -1,72 +1,138 @@
 #include "ITable.hpp"
 #include "IPGSQLDatabase.hpp"
-#include <libpq-fe.h>
-#include <sstream>
 #include "logger.hpp"
+#include <sstream>
+#include <stdexcept>
+#include <libpq-fe.h>
+#include <iostream>
 
 namespace ssec {
     namespace orm {
-        template<typename T>
-        void ITable<T>::createTable(
-            const char* const instruction,
-            const std::shared_ptr<IPGSQLDatabase>& conn
+        template<>
+        std::vector<std::vector<std::shared_ptr<void>>> ITable<PGconn>::select(
+            const std::vector<Field>& fields,
+            const std::vector<Field>& conditions
         ) {
-            auto db = conn->getDatabase();  // Get shared_ptr to database
-
-            // Ensure we extract the pointer to PGconn*
-            PGconn* pg_conn = db.get();  // Extract PGconn* from shared_ptr
-
-            conn->tr_lock();
-
-            try {
-                PGresult* res = PQexec(pg_conn, instruction);  // Use PGconn* here
-                if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-                    LOGGER_ERROR("Failed to create table: %s", PQerrorMessage(pg_conn));  // Pass PGconn* to PQerrorMessage
-                    PQclear(res);
-                    throw std::runtime_error("Failed to create table");
-                }
-                PQclear(res);
-            } catch (const std::exception& e) {
-                conn->tr_unlock();
-                throw;
+            auto ipgsql_conn = std::dynamic_pointer_cast<IPGSQLDatabase>(conn_);
+            if (!ipgsql_conn) {
+                throw std::runtime_error("Invalid database connection type");
             }
 
-            conn->tr_unlock();
-        }
+            PGconn* pg_conn = PQconnectdb(ipgsql_conn->getConnInfo().c_str());
+            if (PQstatus(pg_conn) != CONNECTION_OK) {
+                ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(pg_conn));
+                PQfinish(pg_conn);
+                throw std::runtime_error("Database connection failed");
+            } else {
+                //std::cout << "Connection successful!" << std::endl;
+            }
 
-        template<typename T>
-        void ITable<T>::insert(const std::vector<Field>& values) {
-            auto db = getDatabase();
-            PGconn* pg_conn = db.get();  // Extract PGconn* from shared_ptr
             std::stringstream ss;
-            ss << "INSERT INTO " << getTable() << " (";
-
+            ss << "SELECT ";
             size_t idx = 0;
-            for (const auto& field : values) {
+            for (const auto& field : fields) {
                 ss << field.desc.name;
-                if (idx != values.size() - 1) ss << ", ";
+                if (idx != fields.size() - 1) {
+                    ss << ", ";
+                }
                 idx++;
             }
-            ss << ") VALUES (";
-            for (size_t idx = 0; idx < values.size(); ++idx) {
-                const auto& field = values[idx];
-                if (field.desc.type == Field::FIELD_TYPE::INTEGER) {
-                    ss << *static_cast<const int*>(field.value);  // Cast to int
-                } else if (field.desc.type == Field::FIELD_TYPE::STRING) {
-                    ss << "'" << static_cast<const std::string*>(field.value)->c_str() << "'";  // Cast to string
-                }
-                if (idx != values.size() - 1) ss << ", ";
-            }
-            ss << ")";
 
-            PGresult* res = PQexec(pg_conn, ss.str().c_str());  // Use PGconn* here
-            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-                LOGGER_ERROR("Failed to insert data: %s", PQerrorMessage(pg_conn));  // Pass PGconn* to PQerrorMessage
+            ss << " FROM " << getTable();
+            if (!conditions.empty()) {
+                ss << " WHERE ";
+                idx = 0;
+                for (const auto& condition : conditions) {
+                    ss << condition.desc.name << " = $" << (idx + 1);
+                    if (idx != conditions.size() - 1) {
+                        ss << " AND ";
+                    }
+                    idx++;
+                }
+            }
+            ss << ";";
+
+            PGresult* res = PQexecParams(
+                pg_conn,
+                ss.str().c_str(),
+                conditions.size(),
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                0
+            );
+
+            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                ssec::logger::instance().error("Query execution failed: %s", PQerrorMessage(pg_conn));
                 PQclear(res);
-                throw std::runtime_error("Failed to insert data");
+                PQfinish(pg_conn);
+                throw std::runtime_error("Query execution failed");
+            } else {
+                //std::cout << "Query executed successfully, rows: " << PQntuples(res) << std::endl;
+            }
+
+            std::vector<std::vector<std::shared_ptr<void>>> result;
+            int nRows = PQntuples(res);
+            int nFields = PQnfields(res);
+
+            if (nFields != fields.size()) {
+                ssec::logger::instance().error("Field count does not match result columns");
+                PQclear(res);
+                PQfinish(pg_conn);
+                throw std::runtime_error("Field count mismatch");
+            }
+
+
+            for (int i = 0; i < nRows; ++i) {
+                std::vector<std::shared_ptr<void>> row;
+                for (int j = 0; j < nFields; ++j) {
+                    std::shared_ptr<void> value = nullptr;
+                    if (!PQgetisnull(res, i, j)) {
+                        try {
+                            const char* field_value = PQgetvalue(res, i, j);
+                            if (field_value) {
+
+                                switch (fields[j].desc.type) {
+                                    case Field::FIELD_TYPE::STRING: {
+                                        value = std::make_shared<std::string>(field_value);
+                                        break;
+                                    }
+                                    case Field::FIELD_TYPE::INTEGER: {
+                                        value = std::make_shared<int>(std::stoi(field_value));
+                                        break;
+                                    }
+                                    case Field::FIELD_TYPE::DOUBLE: {
+                                        value = std::make_shared<double>(std::stod(field_value));
+                                        break;
+                                    }
+                                    case Field::FIELD_TYPE::BOOLEAN: {
+                                        value = std::make_shared<bool>(std::stoi(field_value) != 0);
+                                        break;
+                                    }
+                                    default:
+                                        ssec::logger::instance().error("Unknown field type encountered in row %d, column %d", i, j);
+                                        break;
+                                }
+                            } else {
+                                ssec::logger::instance().error("Null value encountered in row %d, column %d", i, j);
+                            }
+                        } catch (const std::exception& e) {
+                            ssec::logger::instance().error("Error processing row %d, column %d: %s", i, j, e.what());
+                        }
+                    } else {
+                        ssec::logger::instance().error("Null value encountered in row %d, column %d", i, j);
+                    }
+
+                    row.push_back(value);
+                }
+                result.push_back(row);
             }
 
             PQclear(res);
+            PQfinish(pg_conn);
+            return result;
         }
     }
 }
+

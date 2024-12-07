@@ -71,6 +71,9 @@ namespace ssec {
             const std::vector<ssec::orm::Field>& conditions
         );
 
+	template<>
+	void ITable<IPGSQLDatabase>::insert(const std::vector<Field>& values);
+
 
     }
 }

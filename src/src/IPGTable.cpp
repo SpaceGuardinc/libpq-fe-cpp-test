@@ -125,13 +125,13 @@ namespace ssec {
 				PQfinish(pg_conn);
 
 				/*
-				for (auto& param : param_values) {
-					if (param) {
-						free(const_cast<char*>(param));
-						param = nullptr;
-					}
-				}
-				*/
+				   for (auto& param : param_values) {
+				   if (param) {
+				   free(const_cast<char*>(param));
+				   param = nullptr;
+				   }
+				   }
+				   */
 			}
 
 
@@ -261,6 +261,198 @@ namespace ssec {
 				PQfinish(pg_conn);
 				return result;
 			}
+
+		template<>
+			void ITable<PGconn>::update(
+					const std::vector<Field>& values,
+					const std::vector<Field>& conditions
+					) {
+				auto ipgsql_conn = std::dynamic_pointer_cast<IPGSQLDatabase>(conn_);
+				if (!ipgsql_conn) {
+					throw std::runtime_error("Invalid database connection type");
+				}
+
+				PGconn* pg_conn = PQconnectdb(ipgsql_conn->getConnInfo().c_str());
+				if (PQstatus(pg_conn) != CONNECTION_OK) {
+					ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(pg_conn));
+					PQfinish(pg_conn);
+					throw std::runtime_error("Database connection failed");
+				}
+
+				std::stringstream ss;
+				ss << "UPDATE " << getTable() << " SET ";
+
+				size_t idx = 0;
+				for (const auto& value : values) {
+					ss << value.desc.name << " = $" << (idx + 1);
+					if (idx != values.size() - 1) {
+						ss << ", ";
+					}
+					idx++;
+				}
+
+				if (!conditions.empty()) {
+					ss << " WHERE ";
+					for (size_t i = 0; i < conditions.size(); i++) {
+						ss << conditions[i].desc.name << " = $" << (values.size() + i + 1);
+						if (i != conditions.size() - 1) {
+							ss << " AND ";
+						}
+					}
+				}
+				ss << ";";
+
+				std::vector<const char*> param_values(values.size() + conditions.size());
+				idx = 0;
+
+				auto add_param_value = [&param_values, &idx](const Field& field) {
+					if (field.value) {
+						switch (field.desc.type) {
+							case Field::FIELD_TYPE::STRING:
+								param_values[idx] = static_cast<const char*>(field.value);
+								break;
+							case Field::FIELD_TYPE::INTEGER: {
+												 auto str = std::to_string(*static_cast<const int*>(field.value));
+												 param_values[idx] = strdup(str.c_str());
+												 break;
+											 }
+							case Field::FIELD_TYPE::DOUBLE: {
+												auto str = std::to_string(*static_cast<const double*>(field.value));
+												param_values[idx] = strdup(str.c_str());
+												break;
+											}
+							case Field::FIELD_TYPE::BOOLEAN: {
+												 auto str = std::to_string(*static_cast<const bool*>(field.value) ? 1 : 0);
+												 param_values[idx] = strdup(str.c_str());
+												 break;
+											 }
+							default:
+											 throw std::runtime_error("Unsupported field type for update");
+						}
+					} else {
+						param_values[idx] = nullptr;
+					}
+					idx++;
+				};
+
+				for (const auto& field : values) {
+					add_param_value(field);
+				}
+				for (const auto& field : conditions) {
+					add_param_value(field);
+				}
+
+				PGresult* res = PQexecParams(
+						pg_conn,
+						ss.str().c_str(),
+						param_values.size(),
+						nullptr,
+						param_values.data(),
+						nullptr,
+						nullptr,
+						0
+						);
+
+				if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+					ssec::logger::instance().error("Update query failed: %s", PQerrorMessage(pg_conn));
+					PQclear(res);
+					PQfinish(pg_conn);
+					throw std::runtime_error("Update query failed");
+				}
+
+				ssec::logger::instance().info("Update query executed successfully");
+				PQclear(res);
+				PQfinish(pg_conn);
+
+				/*
+				for (auto& param : param_values) {
+					if (param) {
+						free(const_cast<char*>(param));
+					}
+				}
+				*/
+			}
+
+		template<>
+			void ITable<PGconn>::delet(const std::vector<Field>& conditions) {
+				auto ipgsql_conn = std::dynamic_pointer_cast<IPGSQLDatabase>(conn_);
+				if (!ipgsql_conn) {
+					throw std::runtime_error("Invalid database connection type");
+				}
+
+				PGconn* pg_conn = PQconnectdb(ipgsql_conn->getConnInfo().c_str());
+				if (PQstatus(pg_conn) != CONNECTION_OK) {
+					ssec::logger::instance().error("Connection to database failed: %s", PQerrorMessage(pg_conn));
+					PQfinish(pg_conn);
+					throw std::runtime_error("Database connection failed");
+				}
+
+				std::stringstream ss;
+				ss << "DELETE FROM " << getTable() << " WHERE ";
+
+				size_t idx = 0;
+				for (const auto& field : conditions) {
+					ss << field.desc.name << " = $" << (idx + 1);
+					if (idx != conditions.size() - 1) {
+						ss << " AND ";
+					}
+					idx++;
+				}
+				ss << ";";
+
+				std::vector<const char*> param_values(conditions.size());
+				std::vector<int> param_lengths(conditions.size(), 0);
+				std::vector<int> param_formats(conditions.size(), 0);
+
+				idx = 0;
+				for (const auto& field : conditions) {
+					if (field.value) {
+						switch (field.desc.type) {
+							case Field::FIELD_TYPE::STRING:
+								param_values[idx] = static_cast<const char*>(field.value);
+								break;
+							case Field::FIELD_TYPE::INTEGER:
+								param_values[idx] = strdup(std::to_string(*static_cast<const int*>(field.value)).c_str());
+								break;
+							case Field::FIELD_TYPE::DOUBLE:
+								param_values[idx] = strdup(std::to_string(*static_cast<const double*>(field.value)).c_str());
+								break;
+							case Field::FIELD_TYPE::BOOLEAN:
+								param_values[idx] = strdup(std::to_string(*static_cast<const bool*>(field.value) ? 1 : 0).c_str());
+								break;
+							default:
+								throw std::runtime_error("Unsupported field type for delete");
+						}
+					} else {
+						param_values[idx] = nullptr;
+					}
+					idx++;
+				}
+
+				PGresult* res = PQexecParams(
+						pg_conn,
+						ss.str().c_str(),
+						conditions.size(),
+						nullptr,
+						param_values.data(),
+						param_lengths.data(),
+						param_formats.data(),
+						0
+						);
+
+				if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+					ssec::logger::instance().error("Delete query failed: %s", PQerrorMessage(pg_conn));
+					PQclear(res);
+					PQfinish(pg_conn);
+					throw std::runtime_error("Delete query failed");
+				}
+
+				ssec::logger::instance().info("Delete query executed successfully");
+				PQclear(res);
+				PQfinish(pg_conn);
+			}
+
+
 	}
 }
 

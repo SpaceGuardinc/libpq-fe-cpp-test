@@ -63,13 +63,25 @@ namespace ssec {
         };
 
         template<>
-        void ITable<IPGSQLDatabase>::createTable(const char* const instruction, const std::shared_ptr<IDatabase<IPGSQLDatabase>>& conn);
+        void ITable<IPGSQLDatabase>::createTable(
+	    const char* const instruction,
+	    const std::shared_ptr<IDatabase<IPGSQLDatabase>>& conn
+	);
 
 	template<>
         std::vector<std::vector<std::shared_ptr<void>>> ITable<PGconn>::select(
             const std::vector<ssec::orm::Field>& fields,
             const std::vector<ssec::orm::Field>& conditions
         );
+
+	template<>
+	void ITable<IPGSQLDatabase>::delet(const std::vector<Field>& conditions);
+
+	template<>
+	void ITable<PGconn>::update(
+	    const std::vector<Field>& values,
+	    const std::vector<Field>& conditions
+	);
 
 	template<>
 	void ITable<IPGSQLDatabase>::insert(const std::vector<Field>& values);
